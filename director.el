@@ -40,7 +40,7 @@
   (with-current-buffer (get-buffer-create director--log-buffer-name)
     (goto-char (point-max))
     (insert
-     (format "%06d | %02d: %s\n"
+     (format "%06d %03d %s\n"
              (round (- (* 1000 (float-time))
                        (* 1000 director--start-time)))
              director--counter
@@ -49,7 +49,7 @@
 (defun director--exec-step-then-next ()
   (cond
    (director--error
-    (director--log (format "ERR: %S" director--error))
+    (director--log (format "ERROR %S" director--error))
     (director--after-last-step))
    ((length= director--steps 0)
     (director--after-last-step))
@@ -60,23 +60,29 @@
         (funcall director--before-step-function))
       (setq director--counter (1+ director--counter)
             director--steps remaining-steps)
-      (director--log (format "STEP: %S" step))
-      ;; Schedule to run again after `cond'
-      (run-with-timer director--delay nil 'director--exec-step-then-next)
+      (director--log (format "STEP %S" step))
       (condition-case err
           (cond
            ((and (listp step) (plist-member step :call))
+            (run-with-timer director--delay nil 'director--exec-step-then-next)
             (call-interactively (plist-get step :call)))
+           ((and (listp step) (plist-member step :debug))
+            (run-with-timer director--delay nil 'director--exec-step-then-next)
+            (director--log (format "DEBUG %S" (eval (plist-get step :debug)))))
            ((and (listp step) (plist-member step :type))
+            (run-with-timer director--delay nil 'director--exec-step-then-next)
             (setq unread-command-events
                   (listify-key-sequence (plist-get step :type))))
-           ((stringp step)
-            (setq unread-command-events
-                  (listify-key-sequence step)))
-           ((vectorp step)
-            (setq unread-command-events
-                  (append step nil)))
-           (t (error "Unrecognized step format: `%S'" step)))
+           ((and (listp step) (plist-member step :wait))
+            (run-with-timer (plist-get step :wait) nil 'director--exec-step-then-next))
+           ((and (listp step) (plist-member step :expect))
+            (let ((expectation (plist-get step :expect)))
+              (run-with-timer director--delay nil 'director--exec-step-then-next)
+              (or (eval expectation)
+                  (error "Expectation failed: `%S'" expectation))))
+           (t
+            (run-with-timer director--delay nil 'director--exec-step-then-next)
+            (error "Unrecognized step: `%S'" step)))
         ;; Save error so that already scheduled step can handle it
         (error (setq director--error err)))))))
 
