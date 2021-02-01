@@ -4,6 +4,7 @@
 (defvar director--steps nil)
 (defvar director--start-time nil)
 (defvar director--counter 0)
+(defvar director--error nil)
 (defvar director--log-buffer-name "*director-log*")
 (defvar director--before-step-function nil)
 
@@ -17,7 +18,7 @@
   (with-current-buffer (get-buffer-create director--log-buffer-name)
     (erase-buffer))
   (setq director--start-time (float-time))  
-  (run-with-timer director--delay nil 'director--next))
+  (run-with-timer director--delay nil 'director--exec-step-then-next))
 
 (defun director-capture-screen (&optional file-name-pattern)
   (lambda ()
@@ -30,38 +31,53 @@
                                             director--counter)))))
 
 (defun director--after-last-step ()
+  (director--log "END")
   (setq director--counter 0
-        director--start-time nil))
+        director--start-time nil
+        director--error nil))
 
 (defun director--log (message)
   (with-current-buffer (get-buffer-create director--log-buffer-name)
     (goto-char (point-max))
     (insert
      (format "%06d | %02d: %s\n"
-             (round (* 1000 (- (float-time)
-                               director--start-time)))
+             (round (- (* 1000 (float-time))
+                       (* 1000 director--start-time)))
              director--counter
              message))))
 
-(defun director--next ()
-  (let ((current-step (car director--steps))
-        (remaining-steps (cdr director--steps)))
-    (if current-step
-        (progn
-          (when director--before-step-function
-            (funcall director--before-step-function))
-          (setq director--counter (1+ director--counter)
-                director--steps remaining-steps)
-          (director--log (format "%S" current-step))
-          (run-with-timer director--delay nil 'director--next)
-          (if (symbolp current-step)
-              (call-interactively current-step)
-            (setq unread-command-events (cond
-                                         ((stringp current-step)
-                                          (listify-key-sequence current-step))
-                                         ((vectorp current-step)
-                                          (append current-step nil))
-                                         (t (error "Unrecognized step format"))))))
-      (director--after-last-step))))
+(defun director--exec-step-then-next ()
+  (cond
+   (director--error
+    (director--log (format "ERR: %S" director--error))
+    (director--after-last-step))
+   ((length= director--steps 0)
+    (director--after-last-step))
+   (t
+    (let ((step (car director--steps))
+          (remaining-steps (cdr director--steps)))
+      (when director--before-step-function
+        (funcall director--before-step-function))
+      (setq director--counter (1+ director--counter)
+            director--steps remaining-steps)
+      (director--log (format "STEP: %S" step))
+      ;; Schedule to run again after `cond'
+      (run-with-timer director--delay nil 'director--exec-step-then-next)
+      (condition-case err
+          (cond
+           ((and (listp step) (plist-member step :call))
+            (call-interactively (plist-get step :call)))
+           ((and (listp step) (plist-member step :type))
+            (setq unread-command-events
+                  (listify-key-sequence (plist-get step :type))))
+           ((stringp step)
+            (setq unread-command-events
+                  (listify-key-sequence step)))
+           ((vectorp step)
+            (setq unread-command-events
+                  (append step nil)))
+           (t (error "Unrecognized step format: `%S'" step)))
+        ;; Save error so that already scheduled step can handle it
+        (error (setq director--error err)))))))
 
 (provide 'director)
