@@ -23,17 +23,16 @@
   (setq director--start-time (float-time))
   (run-with-timer director--delay nil 'director--exec-step-then-next))
 
-(defun director-capture-screen (&optional file-name-pattern)
-  (lambda ()
-    (let ((capture-directory (file-name-directory file-name-pattern))
-          (file-name-pattern (or file-name-pattern
-                                 (concat temporary-file-directory
-                                         "director-capture.%d"))))
-      (make-directory capture-directory t)
-      (call-process "screen"
-                    nil nil nil
-                    "-X" "hardcopy" (format file-name-pattern
-                                            director--counter)))))
+(defun director-capture-screen (file-name-pattern)
+  (let ((capture-directory (file-name-directory file-name-pattern))
+        (file-name-pattern (or file-name-pattern
+                               (concat temporary-file-directory
+                                       "director-capture.%d"))))
+    (make-directory capture-directory t)
+    (call-process "screen"
+                  nil nil nil
+                  "-X" "hardcopy" (format file-name-pattern
+                                          director--counter))))
 
 (defun director--after-last-step ()
   (director--log "END")
