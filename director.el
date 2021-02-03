@@ -73,9 +73,9 @@
            ((and (listp step) (plist-member step :call))
             (run-with-timer director--delay nil 'director--exec-step-then-next)
             (call-interactively (plist-get step :call)))
-           ((and (listp step) (plist-member step :debug))
+           ((and (listp step) (plist-member step :log))
             (run-with-timer director--delay nil 'director--exec-step-then-next)
-            (director--log (format "DEBUG %S" (eval (plist-get step :debug)))))
+            (director--log (format "LOG %S" (eval (plist-get step :log)))))
            ((and (listp step) (plist-member step :type))
             (run-with-timer director--delay nil 'director--exec-step-then-next)
             (setq unread-command-events
