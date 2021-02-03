@@ -7,6 +7,7 @@
 (defvar director--error nil)
 (defvar director--log-buffer-name "*director-log*")
 (defvar director--before-step-function nil)
+(defvar director--on-error nil)
 
 (defun director-start (&rest config)
   (or (setq director--steps (plist-get config :steps))
@@ -14,10 +15,12 @@
   (when (plist-member config :delay-between-steps)
     (setq director--delay (plist-get config :delay-between-steps)))
   (when (plist-member config :before-step-function)
-    (setq director--before-step-function (plist-get config :before-step-function)))  
+    (setq director--before-step-function (plist-get config :before-step-function)))
+  (when (plist-member config :on-error)
+    (setq director--on-error (plist-get config :on-error)))
   (with-current-buffer (get-buffer-create director--log-buffer-name)
     (erase-buffer))
-  (setq director--start-time (float-time))  
+  (setq director--start-time (float-time))
   (run-with-timer director--delay nil 'director--exec-step-then-next))
 
 (defun director-capture-screen (&optional file-name-pattern)
@@ -50,7 +53,9 @@
   (cond
    (director--error
     (director--log (format "ERROR %S" director--error))
-    (director--after-last-step))
+    (director--after-last-step)
+    (when director--on-error
+      (funcall director--on-error)))
    ((length= director--steps 0)
     (director--after-last-step))
    (t
