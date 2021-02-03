@@ -7,6 +7,7 @@
 (defvar director--error nil)
 (defvar director--log-buffer-name "*director-log*")
 (defvar director--before-step-function nil)
+(defvar director--after-step-function nil)
 (defvar director--on-error nil)
 
 (defun director-start (&rest config)
@@ -16,6 +17,8 @@
     (setq director--delay (plist-get config :delay-between-steps)))
   (when (plist-member config :before-step)
     (setq director--before-step-function (plist-get config :before-step)))
+  (when (plist-member config :after-step)
+    (setq director--after-step-function (plist-get config :after-step)))
   (when (plist-member config :on-error)
     (setq director--on-error (plist-get config :on-error)))
   (with-current-buffer (get-buffer-create director--log-buffer-name)
@@ -50,6 +53,11 @@
       (goto-char (point-max))
       (insert log-line))))
 
+(defun director--after-step ()
+  (when (and (> director--counter 0)
+             director--after-step-function)
+    (funcall director--after-step-function)))
+
 (defun director--exec-step-then-next ()
   (cond
    (director--error
@@ -59,8 +67,10 @@
       ;; Give time to the current event loop
       (run-with-timer director--delay nil director--on-error)))
    ((length= director--steps 0)
+    (director--after-step)
     (director--after-last-step))
    (t
+    (director--after-step)
     (let ((step (car director--steps))
           (remaining-steps (cdr director--steps)))
       (when director--before-step-function
