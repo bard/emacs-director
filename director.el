@@ -41,14 +41,14 @@
         director--error nil))
 
 (defun director--log (message)
-  (with-current-buffer (get-buffer-create director--log-buffer-name)
-    (goto-char (point-max))
-    (insert
-     (format "%06d %03d %s\n"
-             (round (- (* 1000 (float-time))
-                       (* 1000 director--start-time)))
-             director--counter
-             message))))
+  (let ((log-line (format "%06d %03d %s\n"
+                          (round (- (* 1000 (float-time))
+                                    (* 1000 director--start-time)))
+                          director--counter
+                          message)))
+    (with-current-buffer (get-buffer-create director--log-buffer-name)
+      (goto-char (point-max))
+      (insert log-line))))
 
 (defun director--exec-step-then-next ()
   (cond
