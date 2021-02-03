@@ -56,7 +56,8 @@
     (director--log (format "ERROR %S" director--error))
     (director--after-last-step)
     (when director--on-error
-      (funcall director--on-error)))
+      ;; Give time to the current event loop
+      (run-with-timer director--delay nil director--on-error)))
    ((length= director--steps 0)
     (director--after-last-step))
    (t
