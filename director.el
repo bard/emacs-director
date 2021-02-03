@@ -25,9 +25,11 @@
 
 (defun director-capture-screen (&optional file-name-pattern)
   (lambda ()
-    (let ((file-name-pattern (or file-name-pattern
+    (let ((capture-directory (file-name-directory file-name-pattern))
+          (file-name-pattern (or file-name-pattern
                                  (concat temporary-file-directory
                                          "director-capture.%d"))))
+      (make-directory capture-directory t)
       (call-process "screen"
                     nil nil nil
                     "-X" "hardcopy" (format file-name-pattern
