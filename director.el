@@ -117,9 +117,11 @@
       ;; Give time to the current event loop iteration to finish
       ;; in case the on-error hook is a `kill-emacs'
       (run-with-timer 0.05 nil director--on-error)))
+   
    ((length= director--steps 0)
     (director--after-step)
     (director--after-last-step))
+   
    (t
     (director--after-step)
     (let ((step (car director--steps))
@@ -134,23 +136,29 @@
            ((and (listp step) (plist-member step :call))
             (director--schedule-next)
             (call-interactively (plist-get step :call)))
+           
            ((and (listp step) (plist-member step :log))
             (director--schedule-next)
             (director--log (format "LOG %S" (eval (plist-get step :log)))))
+           
            ((and (listp step) (plist-member step :type))
             (director--schedule-next)
             (setq unread-command-events
                   (listify-key-sequence (plist-get step :type))))
+           
            ((and (listp step) (plist-member step :wait))
             (director--schedule-next (plist-get step :wait)))
+           
            ((and (listp step) (plist-member step :assert))
             (let ((assertion (plist-get step :assert)))
               (director--schedule-next)
               (or (eval assertion)
                   (error "Expectation failed: `%S'" assertion))))
+           
            (t
             (director--schedule-next)
             (error "Unrecognized step: `%S'" step)))
+        
         ;; Save error so that already scheduled step can handle it
         (error (setq director--error err)))))))
 
