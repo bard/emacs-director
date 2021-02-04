@@ -5,10 +5,10 @@
 (defvar director--start-time nil)
 (defvar director--counter 0)
 (defvar director--error nil)
-(defvar director--log-buffer-name "*director-log*")
 (defvar director--before-step-function nil)
 (defvar director--after-step-function nil)
 (defvar director--on-error nil)
+(defvar director--log-target nil)
 
 (defun director-start (&rest config)
   (or (setq director--steps (plist-get config :steps))
@@ -21,8 +21,8 @@
     (setq director--after-step-function (plist-get config :after-step)))
   (when (plist-member config :on-error)
     (setq director--on-error (plist-get config :on-error)))
-  (with-current-buffer (get-buffer-create director--log-buffer-name)
-    (erase-buffer))
+  (when (plist-member config :log-target)
+    (setq director--log-target (plist-get config :log-target)))
   (setq director--start-time (float-time))
   (run-with-timer director--delay nil 'director--exec-step-then-next))
 
@@ -44,14 +44,24 @@
         director--error nil))
 
 (defun director--log (message)
-  (let ((log-line (format "%06d %03d %s\n"
-                          (round (- (* 1000 (float-time))
-                                    (* 1000 director--start-time)))
-                          director--counter
-                          message)))
-    (with-current-buffer (get-buffer-create director--log-buffer-name)
-      (goto-char (point-max))
-      (insert log-line))))
+  (when director--log-target
+    (let ((log-line (format "%06d %03d %s\n"
+                            (round (- (* 1000 (float-time))
+                                      (* 1000 director--start-time)))
+                            director--counter
+                            message))
+          (target-type (car director--log-target))
+          (target-name (cdr director--log-target)))
+      (pcase target-type
+        ('buffer
+         (with-current-buffer (get-buffer-create target-name)
+           (goto-char (point-max))
+           (insert log-line)))
+        ('file
+         (let ((save-silently t))
+           (append-to-file log-line nil target-name)))
+        (_
+         (error "Unrecognized log target type: %S" target-type))))))
 
 (defun director--after-step ()
   (when (and (> director--counter 0)
