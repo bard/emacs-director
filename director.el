@@ -24,7 +24,7 @@
   (when (plist-member config :log-target)
     (setq director--log-target (plist-get config :log-target)))
   (setq director--start-time (float-time))
-  (run-with-timer director--delay nil 'director--exec-step-then-next))
+  (director--schedule-next))
 
 (defun director-capture-screen (file-name-pattern)
   (let ((capture-directory (file-name-directory file-name-pattern))
@@ -68,14 +68,26 @@
              director--after-step-function)
     (funcall director--after-step-function)))
 
+(defun director--schedule-next (&optional secs)
+  (let ((next (car director--steps)))
+    (run-with-timer (cond (secs
+                           secs)
+                          ((member (car next) '(:call :type))
+                           director--delay)
+                          (t
+                           0.05))
+                    nil
+                    'director--exec-step-then-next)))
+
 (defun director--exec-step-then-next ()
   (cond
    (director--error
     (director--log (format "ERROR %S" director--error))
     (director--after-last-step)
     (when director--on-error
-      ;; Give time to the current event loop
-      (run-with-timer director--delay nil director--on-error)))
+      ;; Give time to the current event loop iteration to finish
+      ;; in case the on-error hook is a `kill-emacs'
+      (run-with-timer 0.05 nil director--on-error)))
    ((length= director--steps 0)
     (director--after-step)
     (director--after-last-step))
@@ -91,26 +103,28 @@
       (condition-case err
           (cond
            ((and (listp step) (plist-member step :call))
-            (run-with-timer director--delay nil 'director--exec-step-then-next)
+            (director--schedule-next)
             (call-interactively (plist-get step :call)))
            ((and (listp step) (plist-member step :log))
-            (run-with-timer director--delay nil 'director--exec-step-then-next)
+            (director--schedule-next)
             (director--log (format "LOG %S" (eval (plist-get step :log)))))
            ((and (listp step) (plist-member step :type))
-            (run-with-timer director--delay nil 'director--exec-step-then-next)
+            (director--schedule-next)
             (setq unread-command-events
                   (listify-key-sequence (plist-get step :type))))
            ((and (listp step) (plist-member step :wait))
-            (run-with-timer (plist-get step :wait) nil 'director--exec-step-then-next))
+            (director--schedule-next (plist-get step :wait)))
            ((and (listp step) (plist-member step :assert))
             (let ((assertion (plist-get step :assert)))
-              (run-with-timer director--delay nil 'director--exec-step-then-next)
+              (director--schedule-next)
               (or (eval assertion)
                   (error "Expectation failed: `%S'" assertion))))
            (t
-            (run-with-timer director--delay nil 'director--exec-step-then-next)
+            (director--schedule-next)
             (error "Unrecognized step: `%S'" step)))
         ;; Save error so that already scheduled step can handle it
         (error (setq director--error err)))))))
 
 (provide 'director)
+
+;;; director.el ends here
