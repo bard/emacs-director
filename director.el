@@ -1,4 +1,33 @@
-;; -*- lexical-binding: t -*-
+;;; director.el --- Simulate user sessions -*- lexical-binding: t -*-
+
+;; Copyright (C) 2021 Massimiliano Mirra
+
+;; Author: Massimiliano Mirra <hyperstruct@gmail.com>
+;; URL: https://github.com/bard/emacs-director
+;; Version: 0.1
+;; Package-Requires: ((emacs "27.1"))
+;; Keywords: 
+
+;; This file is not part of GNU Emacs
+
+;; This file is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation; either version 3, or (at your option)
+;; any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; For a full copy of the GNU General Public License
+;; see <https://www.gnu.org/licenses/>.
+
+;;; Commentary:
+;;
+;; Simulate user sessions.
+
+;;; Code:
 
 (defvar director--delay 0.1)
 (defvar director--steps nil)
