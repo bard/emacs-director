@@ -43,8 +43,14 @@
 (defvar director--typing-style nil)
 
 (defun director-start (&rest config)
+  (director--read-config config)
+  (setq director--start-time (float-time))
+  (director--before-start)
+  (director--schedule-next))
+
+(defun director--read-config (config)
   (or (setq director--steps (plist-get config :steps))
-      (error "Must provide steps"))
+      (error "Missing `:steps' argument."))
   (when (plist-member config :delay-between-steps)
     (setq director--delay (plist-get config :delay-between-steps)))
   (when (plist-member config :before-step)
@@ -59,26 +65,14 @@
     (setq director--on-error (plist-get config :on-error)))
   (when (plist-member config :log-target)
     (setq director--log-target (plist-get config :log-target)))
-  (setq director--start-time (float-time))
   (when (plist-member config :typing-style)
-    (setq director--typing-style (plist-get config :typing-style)))
+    (setq director--typing-style (plist-get config :typing-style))))
 
+(defun director--before-start ()
   (when director--before-start-function
-    (funcall director--before-start-function))
-  (director--schedule-next))
+    (funcall director--before-start-function)))
 
-(defun director-capture-screen (file-name-pattern)
-  (let ((capture-directory (file-name-directory file-name-pattern))
-        (file-name-pattern (or file-name-pattern
-                               (concat temporary-file-directory
-                                       "director-capture.%d"))))
-    (make-directory capture-directory t)
-    (call-process "screen"
-                  nil nil nil
-                  "-X" "hardcopy" (format file-name-pattern
-                                          director--counter))))
-
-(defun director--after-last-step ()
+(defun director--after-end ()
   (director--log "END")
   (setq director--counter 0
         director--start-time nil
@@ -126,7 +120,7 @@
   (cond
    (director--error
     (director--log (format "ERROR %S" director--error))
-    (director--after-last-step)
+    (director--after-end)
     (when director--on-error
       ;; Give time to the current event loop iteration to finish
       ;; in case the on-error hook is a `kill-emacs'
@@ -134,7 +128,7 @@
 
    ((length= director--steps 0)
     (director--after-step)
-    (run-with-timer director--delay nil 'director--after-last-step))
+    (run-with-timer director--delay nil 'director--after-end))
 
    (t
     (director--after-step)
@@ -188,6 +182,21 @@
         (setq unread-command-events (list (car command-events)))
         (run-with-timer delay-s nil 'director--simulate-human-typing (cdr command-events) callback))
     (funcall callback)))
+
+;;; Utilities
+
+(defun director-capture-screen (file-name-pattern)
+  (let ((capture-directory (file-name-directory file-name-pattern))
+        (file-name-pattern (or file-name-pattern
+                               (concat temporary-file-directory
+                                       "director-capture.%d"))))
+    (make-directory capture-directory t)
+    (call-process "screen"
+                  nil nil nil
+                  "-X" "hardcopy" (format file-name-pattern
+                                          director--counter))))
+
+;;; Meta
 
 (provide 'director)
 
