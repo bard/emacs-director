@@ -131,7 +131,7 @@
 
    ((length= director--steps 0)
     (director--after-step)
-    (director--after-last-step))
+    (run-with-timer director--delay nil 'director--after-last-step))
 
    (t
     (director--after-step)
