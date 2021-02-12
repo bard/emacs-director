@@ -40,6 +40,7 @@
 (defvar director--after-step-function nil)
 (defvar director--on-error nil)
 (defvar director--log-target nil)
+(defvar director--typing-style nil)
 
 (defun director-start (&rest config)
   (or (setq director--steps (plist-get config :steps))
@@ -59,6 +60,8 @@
   (when (plist-member config :log-target)
     (setq director--log-target (plist-get config :log-target)))
   (setq director--start-time (float-time))
+  (when (plist-member config :typing-style)
+    (setq director--typing-style (plist-get config :typing-style)))
 
   (when director--before-start-function
     (funcall director--before-start-function))
@@ -153,9 +156,13 @@
             (director--log (format "LOG %S" (eval (plist-get step :log)))))
 
            ((and (listp step) (plist-member step :type))
-            (director--schedule-next)
-            (setq unread-command-events
-                  (listify-key-sequence (plist-get step :type))))
+            (if (eq director--typing-style 'human)
+                (director--simulate-human-typing
+                 (listify-key-sequence (plist-get step :type))
+                 'director--schedule-next)
+              (director--schedule-next)
+              (setq unread-command-events
+                    (listify-key-sequence (plist-get step :type)))))
 
            ((and (listp step) (plist-member step :wait))
             (director--schedule-next (plist-get step :wait)))
@@ -172,6 +179,15 @@
 
         ;; Save error so that already scheduled step can handle it
         (error (setq director--error err)))))))
+
+(defun director--simulate-human-typing (command-events callback)
+  (if command-events
+      (let* ((base-delay-ms 50)
+             (random-variation-ms (- (random 50) 25))
+             (delay-s (/ (+ base-delay-ms random-variation-ms) 1000.0)))
+        (setq unread-command-events (list (car command-events)))
+        (run-with-timer delay-s nil 'director--simulate-human-typing (cdr command-events) callback))
+    (funcall callback)))
 
 (provide 'director)
 
