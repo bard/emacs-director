@@ -6,7 +6,7 @@
 ;; URL: https://github.com/bard/emacs-director
 ;; Version: 0.1
 ;; Package-Requires: ((emacs "27.1"))
-;; Keywords: 
+;; Keywords:
 
 ;; This file is not part of GNU Emacs
 
@@ -34,6 +34,8 @@
 (defvar director--start-time nil)
 (defvar director--counter 0)
 (defvar director--error nil)
+(defvar director--before-start-function nil)
+(defvar director--after-end-function nil)
 (defvar director--before-step-function nil)
 (defvar director--after-step-function nil)
 (defvar director--on-error nil)
@@ -46,6 +48,10 @@
     (setq director--delay (plist-get config :delay-between-steps)))
   (when (plist-member config :before-step)
     (setq director--before-step-function (plist-get config :before-step)))
+  (when (plist-member config :before-start)
+    (setq director--before-start-function (plist-get config :before-start)))
+  (when (plist-member config :after-end)
+    (setq director--after-end-function (plist-get config :after-end)))
   (when (plist-member config :after-step)
     (setq director--after-step-function (plist-get config :after-step)))
   (when (plist-member config :on-error)
@@ -53,6 +59,9 @@
   (when (plist-member config :log-target)
     (setq director--log-target (plist-get config :log-target)))
   (setq director--start-time (float-time))
+
+  (when director--before-start-function
+    (funcall director--before-start-function))
   (director--schedule-next))
 
 (defun director-capture-screen (file-name-pattern)
@@ -70,7 +79,9 @@
   (director--log "END")
   (setq director--counter 0
         director--start-time nil
-        director--error nil))
+        director--error nil)
+  (when director--after-end-function
+    (funcall director--after-end-function)))
 
 (defun director--log (message)
   (when director--log-target
@@ -117,11 +128,11 @@
       ;; Give time to the current event loop iteration to finish
       ;; in case the on-error hook is a `kill-emacs'
       (run-with-timer 0.05 nil director--on-error)))
-   
+
    ((length= director--steps 0)
     (director--after-step)
     (director--after-last-step))
-   
+
    (t
     (director--after-step)
     (let ((step (car director--steps))
@@ -136,29 +147,29 @@
            ((and (listp step) (plist-member step :call))
             (director--schedule-next)
             (call-interactively (plist-get step :call)))
-           
+
            ((and (listp step) (plist-member step :log))
             (director--schedule-next)
             (director--log (format "LOG %S" (eval (plist-get step :log)))))
-           
+
            ((and (listp step) (plist-member step :type))
             (director--schedule-next)
             (setq unread-command-events
                   (listify-key-sequence (plist-get step :type))))
-           
+
            ((and (listp step) (plist-member step :wait))
             (director--schedule-next (plist-get step :wait)))
-           
+
            ((and (listp step) (plist-member step :assert))
             (let ((assertion (plist-get step :assert)))
               (director--schedule-next)
               (or (eval assertion)
                   (error "Expectation failed: `%S'" assertion))))
-           
+
            (t
             (director--schedule-next)
             (error "Unrecognized step: `%S'" step)))
-        
+
         ;; Save error so that already scheduled step can handle it
         (error (setq director--error err)))))))
 
