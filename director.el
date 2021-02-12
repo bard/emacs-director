@@ -68,18 +68,6 @@
   (when (plist-member config :typing-style)
     (setq director--typing-style (plist-get config :typing-style))))
 
-(defun director--before-start ()
-  (when director--before-start-function
-    (funcall director--before-start-function)))
-
-(defun director--after-end ()
-  (director--log "END")
-  (setq director--counter 0
-        director--start-time nil
-        director--error nil)
-  (when director--after-end-function
-    (funcall director--after-end-function)))
-
 (defun director--log (message)
   (when director--log-target
     (let ((log-line (format "%06d %03d %s\n"
@@ -100,23 +88,7 @@
         (_
          (error "Unrecognized log target type: %S" target-type))))))
 
-(defun director--after-step ()
-  (when (and (> director--counter 0)
-             director--after-step-function)
-    (funcall director--after-step-function)))
-
-(defun director--schedule-next (&optional secs)
-  (let ((next (car director--steps)))
-    (run-with-timer (cond (secs
-                           secs)
-                          ((member (car next) '(:call :type))
-                           director--delay)
-                          (t
-                           0.05))
-                    nil
-                    'director--exec-step-then-next)))
-
-(defun director--exec-step-then-next ()
+(defun director--schedule-next (&optional delay)
   (cond
    (director--error
     (director--log (format "ERROR %S" director--error))
@@ -131,48 +103,57 @@
     (run-with-timer director--delay nil 'director--after-end))
 
    (t
-    (director--after-step)
-    (let ((step (car director--steps))
-          (remaining-steps (cdr director--steps)))
-      (when director--before-step-function
-        (funcall director--before-step-function))
-      (setq director--counter (1+ director--counter)
-            director--steps remaining-steps)
-      (director--log (format "STEP %S" step))
-      (condition-case err
-          (cond
-           ((and (listp step) (plist-member step :call))
+    (unless (eq director--counter 0)
+      (director--after-step))
+    (let* ((next-step (car director--steps))
+           (wait (cond (delay delay)
+                       ((member (car next-step) '(:call :type)) director--delay)
+                       (t 0.05))))
+      (run-with-timer wait
+                      nil
+                      (lambda ()
+                        (director--before-step)
+                        (director--exec-step-then-next)))))))
+
+(defun director--exec-step-then-next ()
+  (let ((step (car director--steps)))
+    (setq director--counter (1+ director--counter)
+          director--steps (cdr director--steps))
+    (director--log (format "STEP %S" step))
+    (condition-case err
+        (cond
+         ((and (listp step) (plist-member step :call))
+          (director--schedule-next)
+          (call-interactively (plist-get step :call)))
+
+         ((and (listp step) (plist-member step :log))
+          (director--schedule-next)
+          (director--log (format "LOG %S" (eval (plist-get step :log)))))
+
+         ((and (listp step) (plist-member step :type))
+          (if (eq director--typing-style 'human)
+              (director--simulate-human-typing
+               (listify-key-sequence (plist-get step :type))
+               'director--schedule-next)
             (director--schedule-next)
-            (call-interactively (plist-get step :call)))
+            (setq unread-command-events
+                  (listify-key-sequence (plist-get step :type)))))
 
-           ((and (listp step) (plist-member step :log))
+         ((and (listp step) (plist-member step :wait))
+          (director--schedule-next (plist-get step :wait)))
+
+         ((and (listp step) (plist-member step :assert))
+          (let ((assertion (plist-get step :assert)))
             (director--schedule-next)
-            (director--log (format "LOG %S" (eval (plist-get step :log)))))
+            (or (eval assertion)
+                (error "Expectation failed: `%S'" assertion))))
 
-           ((and (listp step) (plist-member step :type))
-            (if (eq director--typing-style 'human)
-                (director--simulate-human-typing
-                 (listify-key-sequence (plist-get step :type))
-                 'director--schedule-next)
-              (director--schedule-next)
-              (setq unread-command-events
-                    (listify-key-sequence (plist-get step :type)))))
+         (t
+          (director--schedule-next)
+          (error "Unrecognized step: `%S'" step)))
 
-           ((and (listp step) (plist-member step :wait))
-            (director--schedule-next (plist-get step :wait)))
-
-           ((and (listp step) (plist-member step :assert))
-            (let ((assertion (plist-get step :assert)))
-              (director--schedule-next)
-              (or (eval assertion)
-                  (error "Expectation failed: `%S'" assertion))))
-
-           (t
-            (director--schedule-next)
-            (error "Unrecognized step: `%S'" step)))
-
-        ;; Save error so that already scheduled step can handle it
-        (error (setq director--error err)))))))
+      ;; Save error so that already scheduled step can handle it
+      (error (setq director--error err)))))
 
 (defun director--simulate-human-typing (command-events callback)
   (if command-events
@@ -182,6 +163,28 @@
         (setq unread-command-events (list (car command-events)))
         (run-with-timer delay-s nil 'director--simulate-human-typing (cdr command-events) callback))
     (funcall callback)))
+
+;;; Hooks
+
+(defun director--before-step ()
+  (when director--before-step-function
+    (funcall director--before-step-function)))
+
+(defun director--after-step ()
+  (when director--after-step-function
+    (funcall director--after-step-function)))
+
+(defun director--before-start ()
+  (when director--before-start-function
+    (funcall director--before-start-function)))
+
+(defun director--after-end ()
+  (director--log "END")
+  (setq director--counter 0
+        director--start-time nil
+        director--error nil)
+  (when director--after-end-function
+    (funcall director--after-end-function)))
 
 ;;; Utilities
 
