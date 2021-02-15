@@ -49,24 +49,31 @@
   (director--schedule-next))
 
 (defun director--read-config (config)
-  (or (setq director--steps (plist-get config :steps))
-      (error "Missing `:steps' argument."))
-  (when (plist-member config :delay-between-steps)
-    (setq director--delay (plist-get config :delay-between-steps)))
-  (when (plist-member config :before-step)
-    (setq director--before-step-function (plist-get config :before-step)))
-  (when (plist-member config :before-start)
-    (setq director--before-start-function (plist-get config :before-start)))
-  (when (plist-member config :after-end)
-    (setq director--after-end-function (plist-get config :after-end)))
-  (when (plist-member config :after-step)
-    (setq director--after-step-function (plist-get config :after-step)))
-  (when (plist-member config :on-error)
-    (setq director--on-error (plist-get config :on-error)))
-  (when (plist-member config :log-target)
-    (setq director--log-target (plist-get config :log-target)))
-  (when (plist-member config :typing-style)
-    (setq director--typing-style (plist-get config :typing-style))))
+  (mapc (lambda (config-entry)
+          (pcase config-entry
+            (`(:steps ,steps)
+             (setq director--steps steps))
+            (`(:delay-between-steps ,delay)
+             (setq director--delay delay))
+            (`(:before-step ,function)
+             (setq director--before-step-function function))
+            (`(:before-start ,function)
+             (setq director--before-start-function function))
+            (`(:after-end ,function)
+             (setq director--after-end-function function))
+            (`(:after-step ,function)
+             (setq director--after-step-function function))
+            (`(:on-error ,function)
+             (setq director--on-error function))
+            (`(:log-target ,target)
+             (setq director--log-target target))
+            (`(:typing-style ,style)
+             (setq director--typing-style style))
+            (entry
+             (error "Invalid configuration entry: `%s'" entry))))
+        (seq-partition config 2))
+  (or director--steps
+      (error "Configuration entry `:steps' is required.")))
 
 (defun director--log (message)
   (when director--log-target
@@ -124,7 +131,6 @@
     (director--log (format "STEP %S" step))
     (condition-case err
         (pcase step
-          
           (`(:call ,command)
            ;; Next step must be scheduled before executing the command, because
            ;; the command might block (e.g. when requesting input) in which case
