@@ -42,7 +42,7 @@
 (defvar director--log-target nil)
 (defvar director--typing-style nil)
 
-(defun director-start (&rest config)
+(defun director-run (&rest config)
   (director--read-config config)
   (setq director--start-time (float-time))
   (director--before-start)
@@ -88,7 +88,7 @@
         (_
          (error "Unrecognized log target type: %S" target-type))))))
 
-(defun director--schedule-next (&optional delay)
+(defun director--schedule-next (&optional delay-override)
   (cond
    (director--error
     (director--log (format "ERROR %S" director--error))
@@ -106,10 +106,10 @@
     (unless (eq director--counter 0)
       (director--after-step))
     (let* ((next-step (car director--steps))
-           (wait (cond (delay delay)
-                       ((member (car next-step) '(:call :type)) director--delay)
-                       (t 0.05))))
-      (run-with-timer wait
+           (delay (cond (delay-override delay-override)
+                        ((member (car next-step) '(:call :type)) director--delay)
+                        (t 0.05))))
+      (run-with-timer delay
                       nil
                       (lambda ()
                         (director--before-step)

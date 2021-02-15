@@ -6,7 +6,7 @@
 
 (require 'director)
 
-(director-start
+(director-run
  :before-start (lambda ()
                  (setq python-indent-guess-indent-offset nil)
                  (switch-to-buffer (get-buffer-create "/tmp/example.py"))
