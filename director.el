@@ -34,11 +34,13 @@
 (defvar director--start-time nil)
 (defvar director--counter 0)
 (defvar director--error nil)
+(defvar director--failure nil)
 (defvar director--before-start-function nil)
 (defvar director--after-end-function nil)
 (defvar director--before-step-function nil)
 (defvar director--after-step-function nil)
-(defvar director--on-error nil)
+(defvar director--on-error-function nil)
+(defvar director--on-failure-function nil)
 (defvar director--log-target nil)
 (defvar director--typing-style nil)
 
@@ -64,7 +66,9 @@
             (`(:after-step ,function)
              (setq director--after-step-function function))
             (`(:on-error ,function)
-             (setq director--on-error function))
+             (setq director--on-error-function function))
+            (`(:on-failure ,function)
+             (setq director--on-failure-function function))
             (`(:log-target ,target)
              (setq director--log-target target))
             (`(:typing-style ,style)
@@ -99,15 +103,16 @@
   (cond
    (director--error
     (director--log (format "ERROR %S" director--error))
-    (director--after-end)
-    (when director--on-error
-      ;; Give time to the current event loop iteration to finish
-      ;; in case the on-error hook is a `kill-emacs'
-      (run-with-timer 0.05 nil director--on-error)))
+    (run-with-timer director--delay nil 'director--end))
+
+   (director--failure
+    (director--log (format "FAILURE: %S" director--failure))
+    (run-with-timer director--delay nil 'director--end))
 
    ((length= director--steps 0)
+    ;; Run after-step callback for last step
     (director--after-step)
-    (run-with-timer director--delay nil 'director--after-end))
+    (run-with-timer director--delay nil 'director--end))
 
    (t
     (unless (eq director--counter 0)
@@ -157,7 +162,7 @@
           (`(:assert ,condition)
            (director--schedule-next)
            (or (eval condition)
-               (error "Expectation failed: `%S'" condition)))
+               (setq director--failure condition)))
 
           (step
            (director--schedule-next)
@@ -189,13 +194,21 @@
   (when director--before-start-function
     (funcall director--before-start-function)))
 
-(defun director--after-end ()
+(defun director--end ()
   (director--log "END")
-  (setq director--counter 0
-        director--start-time nil
-        director--error nil)
-  (when director--after-end-function
-    (funcall director--after-end-function)))
+  (setq director--counter 0)
+  (setq director--start-time nil)
+  (cond
+   ((and director--error director--on-error-function)
+    ;; Give time to the current event loop iteration to finish
+    ;; in case the on-error hook is a `kill-emacs'
+    (setq director--error nil)
+    (run-with-timer 0.05 nil director--on-error-function))
+   ((and director--failure director--on-failure-function)
+    (setq director--failure nil)
+    (run-with-timer 0.05 nil director--on-failure-function))
+   (director--after-end-function
+    (run-with-timer 0.05 nil director--after-end-function))))
 
 ;;; Utilities
 
