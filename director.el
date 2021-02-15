@@ -107,7 +107,9 @@
       (director--after-step))
     (let* ((next-step (car director--steps))
            (delay (cond (delay-override delay-override)
-                        ((member (car next-step) '(:call :type)) director--delay)
+                        ((and (listp next-step)
+                              (member (car next-step) '(:call :type)))
+                         director--delay)
                         (t 0.05))))
       (run-with-timer delay
                       nil
@@ -121,36 +123,39 @@
           director--steps (cdr director--steps))
     (director--log (format "STEP %S" step))
     (condition-case err
-        (cond
-         ((and (listp step) (plist-member step :call))
-          (director--schedule-next)
-          (call-interactively (plist-get step :call)))
+        (pcase step
+          
+          (`(:call ,command)
+           ;; Next step must be scheduled before executing the command, because
+           ;; the command might block (e.g. when requesting input) in which case
+           ;; we'd never get to schedule the step.
+           (director--schedule-next)
+           (call-interactively command))
 
-         ((and (listp step) (plist-member step :log))
-          (director--schedule-next)
-          (director--log (format "LOG %S" (eval (plist-get step :log)))))
+          (`(:log ,form)
+           (director--schedule-next)
+           (director--log (format "LOG %S" (eval form))))
 
-         ((and (listp step) (plist-member step :type))
-          (if (eq director--typing-style 'human)
-              (director--simulate-human-typing
-               (listify-key-sequence (plist-get step :type))
-               'director--schedule-next)
-            (director--schedule-next)
-            (setq unread-command-events
-                  (listify-key-sequence (plist-get step :type)))))
+          (`(:type ,key-sequence)
+           (if (eq director--typing-style 'human)
+               (director--simulate-human-typing
+                (listify-key-sequence key-sequence)
+                'director--schedule-next)
+             (director--schedule-next)
+             (setq unread-command-events
+                   (listify-key-sequence key-sequence))))
 
-         ((and (listp step) (plist-member step :wait))
-          (director--schedule-next (plist-get step :wait)))
+          (`(:wait ,delay)
+           (director--schedule-next delay))
 
-         ((and (listp step) (plist-member step :assert))
-          (let ((assertion (plist-get step :assert)))
-            (director--schedule-next)
-            (or (eval assertion)
-                (error "Expectation failed: `%S'" assertion))))
+          (`(:assert ,condition)
+           (director--schedule-next)
+           (or (eval condition)
+               (error "Expectation failed: `%S'" condition)))
 
-         (t
-          (director--schedule-next)
-          (error "Unrecognized step: `%S'" step)))
+          (step
+           (director--schedule-next)
+           (error "Unrecognized step: %S" step)))
 
       ;; Save error so that already scheduled step can handle it
       (error (setq director--error err)))))
