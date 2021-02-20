@@ -45,14 +45,47 @@
 (defvar director--typing-style nil)
 
 (defun director-run (&rest config)
+  "Simulate a user session as defined by CONFIG.
+
+CONFIG is a property list containing the following properties:
+
+- `:version' (number; required): currently must be `1'
+- `:steps' (list; required): a list of steps (see below)
+- `:before-start':
+- `:after-end':
+- `:after-step':
+- `:on-failure':
+- `:on-error':
+- `:on-failure':
+- `:log-target':
+- `:typing-style':
+- `:delay-between-steps':
+
+A step can be one of:
+
+- `:type':
+- `:call':
+- `:log':
+- `:wait':
+- `:suspend':
+- `:assert':
+
+"
   (director--read-config config)
   (setq director--start-time (float-time))
   (director--before-start)
   (director--schedule-next))
 
 (defun director--read-config (config)
+  (or (map-elt config :version)
+      (error "Director: configuration entry `:version' missing"))
+  (or (map-elt config :steps)
+      (error "Director: configuration entry `:steps' missing"))
   (mapc (lambda (config-entry)
           (pcase config-entry
+            (`(:version ,version)
+             (or (equal version 1)
+                 (error "Invalid :version")))
             (`(:steps ,steps)
              (setq director--steps steps))
             (`(:delay-between-steps ,delay)
@@ -74,10 +107,8 @@
             (`(:typing-style ,style)
              (setq director--typing-style style))
             (entry
-             (error "Invalid configuration entry: `%s'" entry))))
-        (seq-partition config 2))
-  (or director--steps
-      (error "Configuration entry `:steps' is required.")))
+             (error "Director: invalid configuration entry: `%s'" entry))))
+        (seq-partition config 2)))
 
 (defun director--log (message)
   (when director--log-target
