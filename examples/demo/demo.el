@@ -1,12 +1,14 @@
-(load-file "setup.el")
 
-(setup-env :user-dir "/tmp/director-demo"
-           :packages '(python)
-           :load-path '("~/projects/emacs-director"))
+(director-bootstrap
+ :user-dir "/tmp/director-demo"
+ :packages '()
+ :load-path '("~/projects/emacs-director" ;; won't be needed after director is published to Melpa
+              ))
 
 (require 'director)
 
 (director-run
+ :version 1
  :before-start (lambda ()
                  (setq python-indent-guess-indent-offset nil)
                  (switch-to-buffer (get-buffer-create "/tmp/example.py"))
@@ -20,7 +22,6 @@
           (:type "\C-xo")
           (:type "greet()\r"))
  :typing-style 'human
- :log-target '(file . "director.log")
  :delay-between-steps 1
  :after-end (lambda () (kill-emacs 0))
  :on-error (lambda () (kill-emacs 1))
