@@ -10,8 +10,9 @@
 (director-run
  :version 1
  :before-start (lambda ()
+                 (switch-to-buffer (get-buffer-create "*example*"))
+                 (menu-bar-mode -1)
                  (setq python-indent-guess-indent-offset nil)
-                 (switch-to-buffer (get-buffer-create "/tmp/example.py"))
                  (python-mode))
  :steps '((:call run-python)
           (:type "def greet():\r")
@@ -25,4 +26,3 @@
  :delay-between-steps 1
  :after-end (lambda () (kill-emacs 0))
  :on-error (lambda () (kill-emacs 1)))
-
