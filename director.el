@@ -29,7 +29,7 @@
 
 ;;; Code:
 
-(defvar director--delay 0.1)
+(defvar director--delay 1)
 (defvar director--steps nil)
 (defvar director--start-time nil)
 (defvar director--counter 0)
