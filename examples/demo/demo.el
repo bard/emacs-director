@@ -1,11 +1,11 @@
+;; Run with:
+;;
+;;   emacs -Q -nw -l ../../director-bootstrap.el -l demo.el
 
 (director-bootstrap
  :user-dir "/tmp/director-demo"
  :packages '()
- :load-path '("~/projects/emacs-director" ;; won't be needed after director is published to Melpa
-              ))
-
-(require 'director)
+ :load-path '("../.."))
 
 (director-run
  :version 1
@@ -24,6 +24,5 @@
  :typing-style 'human
  :delay-between-steps 1
  :after-end (lambda () (kill-emacs 0))
- :on-error (lambda () (kill-emacs 1))
- :on-failure (lambda () (kill-emacs 1)))
+ :on-error (lambda () (kill-emacs 1)))
 
