@@ -1,3 +1,13 @@
+;; Scenarios might be stored in a projects's source tree but are
+;; supposed to run in a clean environment. Disable reading
+;; `.dir-locals.el' so that Emacs doesn't try to load it from the
+;; project's source tree. This cannot come as part of the
+;; `director-bootstrap' function because, by the time that's called by
+;; a file in the source tree, Emacs will already have tried to load
+;; the corresponding `.dir-locals.el' file.
+
+(setq enable-dir-local-variables nil)
+
 (defun director-bootstrap (&rest config)
   "Setup the environment for a simulated user session."
 
