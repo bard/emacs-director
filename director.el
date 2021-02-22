@@ -190,6 +190,9 @@ A step can be one of:
           (`(:wait ,delay)
            (director--schedule-next delay))
 
+          (`(:suspend)
+           nil)
+          
           (`(:assert ,condition)
            (director--schedule-next)
            (or (eval condition)
@@ -253,6 +256,10 @@ A step can be one of:
                   nil nil nil
                   "-X" "hardcopy" (format file-name-pattern
                                           director--counter))))
+
+(defun director-resume ()
+  (interactive)
+  (director--schedule-next))
 
 ;;; Meta
 
