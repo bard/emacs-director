@@ -246,6 +246,11 @@ A step can be one of:
 
 ;;; Utilities
 
+;; Use to capture a "screenshot" when running under screen:
+;;
+;;   :after-step (lambda ()
+;;                 (director-capture-screen "snapshots/scenario-1/snapshot.%d"))
+
 (defun director-capture-screen (file-name-pattern)
   (let ((capture-directory (file-name-directory file-name-pattern))
         (file-name-pattern (or file-name-pattern
