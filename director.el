@@ -56,7 +56,7 @@ their values:
   format)
 - `:before-start' : optional function to run before the first
   step
-- `:after-end' optional function to run after the last step 
+- `:after-end' optional function to run after the last step
 - `:after-step' optional function to run after every step
 - `:on-failure': optional function to run when an `:assert' step
   fails
@@ -82,9 +82,9 @@ A step can be one of:
   written to log; e.g. `(:log (buffer-file-name (current-buffer)))'
 - `:wait': number; seconds to wait before next step; overrides
   config-wide `:delay-between-steps'
-- `:assert': Lisp form; if it evaluates to `nil', execution is
+- `:assert': Lisp form; if it evaluates to nil, execution is
   interrupted and function configured through `:on-failure' is
-  called 
+  called
 - `:suspend': suspend execution; useful for debugging; resume
   using the `director-resume' command"
   (director--read-config config)
@@ -93,6 +93,7 @@ A step can be one of:
   (director--schedule-next))
 
 (defun director--read-config (config)
+  "Read CONFIG values into global state."
   (or (map-elt config :version)
       (error "Director: configuration entry `:version' missing"))
   (or (map-elt config :steps)
@@ -127,6 +128,7 @@ A step can be one of:
         (seq-partition config 2)))
 
 (defun director--log (message)
+  "Log MESSAGE."
   (when director--log-target
     (let ((log-line (format "%06d %03d %s\n"
                             (round (- (* 1000 (float-time))
@@ -147,6 +149,9 @@ A step can be one of:
          (error "Unrecognized log target type: %S" target-type))))))
 
 (defun director--schedule-next (&optional delay-override)
+  "Schedule next step.
+If DELAY-OVERRIDE is non-nil, the next step is delayed by that value rather than
+`director--delay'."
   (cond
    (director--error
     (director--log (format "ERROR %S" director--error))
@@ -177,6 +182,7 @@ A step can be one of:
                         (director--exec-step-then-next)))))))
 
 (defun director--exec-step-then-next ()
+  "Execute current step, scheduling next step."
   (let ((step (car director--steps)))
     (setq director--counter (1+ director--counter)
           director--steps (cdr director--steps))
@@ -222,6 +228,7 @@ A step can be one of:
       (error (setq director--error err)))))
 
 (defun director--simulate-human-typing (command-events callback)
+  "Simulate typing COMMAND-EVENTS and then execute CALLBACK."
   (if command-events
       (let* ((base-delay-ms 50)
              (random-variation-ms (- (random 50) 25))
@@ -233,18 +240,22 @@ A step can be one of:
 ;;; Hooks
 
 (defun director--before-step ()
+  "Execute `director--before-step-function'."
   (when director--before-step-function
     (funcall director--before-step-function)))
 
 (defun director--after-step ()
+  "Execute `director--after-step-function'."
   (when director--after-step-function
     (funcall director--after-step-function)))
 
 (defun director--before-start ()
+  "Execute `director--before-start-function'."
   (when director--before-start-function
     (funcall director--before-start-function)))
 
 (defun director--end ()
+  "Update global state after steps are run."
   (director--log "END")
   (setq director--counter 0)
   (setq director--start-time nil)
@@ -268,6 +279,7 @@ A step can be one of:
 ;;                 (director-capture-screen "snapshots/scenario-1/snapshot.%d"))
 
 (defun director-capture-screen (file-name-pattern)
+  "Capture screen in to directory matching FILE-NAME-PATTERN."
   (let ((capture-directory (file-name-directory file-name-pattern))
         (file-name-pattern (or file-name-pattern
                                (concat temporary-file-directory
