@@ -1,6 +1,6 @@
 ;; Run with:
 ;;
-;;   emacs -Q -nw -l ../../director-bootstrap.el -l demo.el
+;;   emacs -Q -nw -l ../../util/director-bootstrap.el -l demo.el
 
 (director-bootstrap
  :user-dir "/tmp/director-demo"
