@@ -86,7 +86,7 @@ A step can be one of:
   interrupted and function configured through `:on-failure' is
   called 
 - `:suspend': suspend execution; useful for debugging; resume
-  using the `director-continue' command"
+  using the `director-resume' command"
   (director--read-config config)
   (setq director--start-time (float-time))
   (director--before-start)
@@ -279,6 +279,7 @@ A step can be one of:
                                           director--counter))))
 
 (defun director-resume ()
+  "Resume from a `(:suspend)' step."
   (interactive)
   (director--schedule-next))
 
