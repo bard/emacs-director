@@ -28,6 +28,8 @@
 ;; Simulate user sessions.
 
 ;;; Code:
+(require 'map)
+(require 'seq)
 
 (defvar director--delay 1)
 (defvar director--steps nil)
