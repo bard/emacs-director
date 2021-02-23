@@ -77,7 +77,11 @@ A step can be one of:
   key events; if a string, it will be converted to key events
   using `listify-key-sequence' and can contain special
   characters, e.g. `(:type \"\\M-xsetenv\\r\")'
-- `:call': shortcut to invoke an interactive command, e.g. `(:call setenv)'
+- `:call': shortcut to invoke an interactive command, e.g. `(:call setenv)`
+  It's value may be a command symbol or a list of the form:
+    (:call (COMMAND ARGS))
+  The ARGS must be a string specifying the prefix argument for COMMAND.
+  e.g. (:call (org-capture \"C-u C-u\"))
 - `:log': Lisp form; it will be evaluated and its result will be
   written to log; e.g. `(:log (buffer-file-name (current-buffer)))'
 - `:wait': number; seconds to wait before next step; overrides
@@ -176,6 +180,25 @@ A step can be one of:
                         (director--before-step)
                         (director--exec-step-then-next)))))))
 
+(defun director--command-prefix-arg (args)
+  "Return `current-prefix-arg' value from ARGS string."
+  (let (value list negative)
+    (mapc (lambda (token)
+            (pcase token
+              ((or "C-u" "c-u")
+               (unless value (setq value 1))
+               (setq value (* value 4)
+                     list t))
+              ("-" (setq negative t
+                         list nil
+                         value '-))
+              ;;assumed numeric arg
+              (_ (let ((n (string-to-number token)))
+                   (setq value (if negative (- n) n)
+                         list nil)))))
+          (split-string args " " t " "))
+    (if list (list value) value)))
+
 (defun director--exec-step-then-next ()
   (let ((step (car director--steps)))
     (setq director--counter (1+ director--counter)
@@ -188,7 +211,12 @@ A step can be one of:
            ;; the command might block (e.g. when requesting input) in which case
            ;; we'd never get to schedule the step.
            (director--schedule-next)
-           (call-interactively command))
+           (let (arg)
+             (when (listp command)
+               (setq arg (director--command-prefix-arg (cadr command))
+                     command (car command)))
+             (let ((current-prefix-arg arg))
+               (call-interactively command))))
 
           (`(:log ,form)
            (director--schedule-next)
