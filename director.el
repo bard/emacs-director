@@ -6,7 +6,7 @@
 ;; URL: https://github.com/bard/emacs-director
 ;; Version: 0.1
 ;; Package-Requires: ((emacs "27.1"))
-;; Keywords:
+;; Keywords: maint, tools
 
 ;; This file is not part of GNU Emacs
 
