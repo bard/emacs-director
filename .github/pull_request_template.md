@@ -1,13 +1,21 @@
 ## Summary
 
 <!-- What feature, enhancement, or fix does the PR provide? If more than one,
-please open separate PRs. If a PR is a work in progress, mark it as "draft". -->
+please open separate PRs. -->
 
-## Issue (optional)
+## Description
 
-<!-- If a related issue exists, please link it here. If it doesn't, and the PR
-is about a bug fix, please add instructions on how to reproduce the bug
-here. -->
+<!--
+
+- For bug fixes: Link the corresponding issue, if it exists, or describe the bug
+  and give steps to reproduce it.
+
+- For enhancement: Describe what has been improved.
+
+- For new features: Describe what was not possible previously and what would be
+  possible after the PR.
+
+-->
 
 ## Technical debt (optional)
 
