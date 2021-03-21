@@ -218,9 +218,9 @@ If DELAY-OVERRIDE is non-nil, the next step is delayed by that value rather than
            nil)
           
           (`(:assert ,condition)
-           (director--schedule-next)
            (or (eval condition)
-               (setq director--failure condition)))
+               (setq director--failure condition))
+           (director--schedule-next))
 
           (step
            (director--schedule-next)
