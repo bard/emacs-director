@@ -95,7 +95,7 @@ asciinema play demo.cast
 5. Convert to a gif with:
 
 ```sh
-asciicast2gif demo.cast demo.gif``
+asciicast2gif demo.cast demo.gif
 ```
 
 See [below](#running-in-a-controlled-environment) for information about `director-bootstrap.el`.
