@@ -166,7 +166,7 @@ If DELAY-OVERRIDE is non-nil, the next step is delayed by that value rather than
    ((length= director--steps 0)
     ;; Run after-step callback for last step
     (director--after-step)
-    (run-with-timer director--delay nil 'director--end))
+    (run-with-timer (or delay-override director--delay) nil 'director--end))
 
    (t
     (unless (eq director--counter 0)
