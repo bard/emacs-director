@@ -78,7 +78,7 @@ $ emacs -Q -nw -l ../../util/director-bootstrap.el -l demo.el
 
 ### Recording screencasts
 
-1. Write a session script (see [run-command's demo.el](https://github.com/bard/emacs-run-command/tree/master/test/demo.el) for an example)
+1. Write a session script (see [demo.el](examples/demo/demo.el) in this repository for a minimal example, or [run-command's demo.el](https://github.com/bard/emacs-run-command/tree/master/test/demo.el) for a real-life example)
 2. [Install asciicast](https://asciinema.org/docs/installation) and [asciicast2gif](https://github.com/asciinema/asciicast2gif)
 3. Create a session script and save it as e.g. `my-session-script.el`
 4. Launch with:
