@@ -78,9 +78,10 @@ $ emacs -Q -nw -l ../../util/director-bootstrap.el -l demo.el
 
 ### Recording screencasts
 
-1. [Install asciicast](https://asciinema.org/docs/installation) and [asciicast2gif](https://github.com/asciinema/asciicast2gif)
-2. Create a session script and save it as e.g. `my-session-script.el`
-3. Launch with:
+1. Write a session script (see [run-command's demo.el](https://github.com/bard/emacs-run-command/tree/master/test/demo.el) for an example)
+2. [Install asciicast](https://asciinema.org/docs/installation) and [asciicast2gif](https://github.com/asciinema/asciicast2gif)
+3. Create a session script and save it as e.g. `my-session-script.el`
+4. Launch with:
 
 ```sh
 $ asciinema rec demo.cast -c 'emacs -nw -Q -l director-bootstrap.el -l my-session-script.el'
@@ -102,7 +103,7 @@ See [below](#running-in-a-controlled-environment) for information about `directo
 
 ### End-to-end testing
 
-See [run-command's tests](https://github.com/bard/emacs-run-command/tree/master/test) for an example.
+See [run-command's test scenarios](https://github.com/bard/emacs-run-command/tree/master/test) for an example.
 
 - `run.sh` launches a headless (via `screen`) Emacs instance for each `scenario-*.el` file
   - `scenario-*.el` loads `setup.el` to perform common setup and load fixtures
