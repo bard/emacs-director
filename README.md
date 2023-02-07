@@ -159,12 +159,7 @@ Debugging strategies are rudimentary for now:
 
 ## API reference
 
-<!-- autodoc-api-start - Don't edit. Run M-x autodoc-refresh-markdown
--->
-
-### Command: `director-resume`
-
-Resume from a `(:suspend)` step.
+<!-- elisp-docgen-start (:symbols (director-run director-resume)) -->
 
 ### Function: `director-run`
 
@@ -211,7 +206,11 @@ A step can be one of:
 - `:suspend`: suspend execution; useful for debugging; resume
   using the `director-resume` command
 
-<!-- autodoc-api-end -->
+### Command: `director-resume`
+
+Resume from a `(:suspend)` step.
+
+<!-- elisp-docgen-end -->
 
 ## Limitations and further development
 
@@ -220,8 +219,3 @@ than a proper user interface: it requires you to specify everything, every time,
 and doesn't provide higher-level functionality such as interactive debugging,
 parallel runs, and test resporting. The goal is to eventually have that, though
 driven by real use cases rather than upfront design.
-
-<!-- Local Variables: -->
-<!-- autodoc-markdown-headline-level: 3 -->
-<!-- autodoc-filter: (lambda (sym) (member sym '(director-run director-resume))) -->
-<!-- End: -->
