@@ -270,8 +270,9 @@ If DELAY-OVERRIDE is non-nil, the next step is delayed by that value rather than
    ((and director--error director--on-error-function)
     ;; Give time to the current event loop iteration to finish
     ;; in case the on-error hook is a `kill-emacs'
-    (setq director--error nil)
-    (run-with-timer 0.05 nil director--on-error-function))
+    (let ((err director--error))
+      (setq director--error nil)
+      (run-with-timer 0.05 nil director--on-error-function err)))
    ((and director--failure director--on-failure-function)
     (setq director--failure nil)
     (run-with-timer 0.05 nil director--on-failure-function))
