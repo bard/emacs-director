@@ -1,0 +1,11 @@
+;; -*- mode: emacs-lisp; lexical-binding: t -*-
+
+;; Uncomment some calls below as needed for your project.
+(eldev-use-package-archive 'gnu-elpa)
+;;(eldev-use-package-archive 'nongnu-elpa)
+(eldev-use-package-archive 'melpa)
+
+(setq eldev-project-main-file "director.el")
+
+(setf eldev-lint-ignored-fileset
+      `(:or ,(eldev-package-descriptor-file-name) "examples" "util"))

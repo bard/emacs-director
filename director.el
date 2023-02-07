@@ -262,7 +262,7 @@ If DELAY-OVERRIDE is non-nil, the next step is delayed by that value rather than
     (funcall director--before-start-function)))
 
 (defun director--end ()
-  "Update global state after steps are run."
+  "Update global state after script is run."
   (director--log "END")
   (setq director--counter 0)
   (setq director--start-time nil)
