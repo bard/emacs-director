@@ -1,0 +1,7 @@
+*.elc
+/.eldev
+/Eldev-local
+/docs/node_modules
+/docs/out
+/docs/.next
+_*
