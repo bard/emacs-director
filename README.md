@@ -60,7 +60,8 @@ Developer preview, low-level API only. See
  :typing-style 'human
  :delay-between-steps 1
  :after-end (lambda () (kill-emacs 0))
- :on-error (lambda () (kill-emacs 1)))
+ ;; give useful feedback during development
+ :on-error (lambda (err) (message "Error while executing director script: %S" err)))
 ```
 
 3. Launch it:
@@ -78,10 +79,9 @@ $ emacs -Q -nw -l ../../util/director-bootstrap.el -l demo.el
 
 ### Recording screencasts
 
-1. Write a session script (see [demo.el](examples/demo/demo.el) in this repository for a minimal example, or [run-command's demo.el](https://github.com/bard/emacs-run-command/tree/master/test/demo.el) for a real-life example)
-2. [Install asciicast](https://asciinema.org/docs/installation) and [asciicast2gif](https://github.com/asciinema/asciicast2gif)
-3. Create a session script and save it as e.g. `my-session-script.el`
-4. Launch with:
+1. [Install asciicast](https://asciinema.org/docs/installation) and an asciicast-to-gif converter such as [agg](https://github.com/asciinema/agg)
+2. Write a session script (see [demo.el](examples/demo/demo.el) in this repository for a minimal example, or [run-command's demo.el](https://github.com/bard/emacs-run-command/tree/master/demo/demo.el) for a real-life example) and save it as e.g. `my-session-script.el`
+3. Launch with:
 
 ```sh
 $ asciinema rec demo.cast -c 'emacs -nw -Q -l director-bootstrap.el -l my-session-script.el'
@@ -96,7 +96,7 @@ asciinema play demo.cast
 5. Convert to a gif with:
 
 ```sh
-asciicast2gif demo.cast demo.gif
+agg demo.cast demo.gif
 ```
 
 See [below](#running-in-a-controlled-environment) for information about `director-bootstrap.el`.
@@ -151,17 +151,18 @@ chicken-and-egg problem.
 
 Debugging strategies are rudimentary for now:
 
+- assign a value of `(lambda (err) (message "Error while executing director script: %S" err))` to the `:on-error` property
 - if you're running a headless session under `screen -D -m`, run a visible one instead
 - increase `:delay-between-steps` to see what's going on
 - set a `:log-target` file and `tail -f` it
-- add `(:log FORM)` steps
+- sprinkle the script with `(:log FORM)` steps
 - add a `(:suspend)` step, inspect the session interactively, resume with `M-x director-resume`
 
 ## API reference
 
 <!-- elisp-docgen-start (:symbols (director-run director-resume)) -->
 
-### Function: `director-run`
+#### Function: `(director-run &REST CONFIG)`
 
 Simulate a user session as defined by CONFIG.
 
@@ -179,7 +180,7 @@ their values:
 - `:on-failure`: optional function to run when an `:assert` step
   fails
 - `:on-error`: optional function to run when a step triggers an
-  error
+  error; receives the error as argument
 - `:log-target`: optional cons cell of the format `(file . "filename")` specifying a file to save the log to
 - `:typing-style`: optional symbol changing the way that `:type`
   steps type characters; set to `human` to simulate a human
@@ -200,22 +201,14 @@ A step can be one of:
   written to log; e.g. `(:log (buffer-file-name (current-buffer)))`
 - `:wait`: number; seconds to wait before next step; overrides
   config-wide `:delay-between-steps`
-- `:assert`: Lisp form; if it evaluates to `nil`, execution is
+- `:assert`: Lisp form; if it evaluates to nil, execution is
   interrupted and function configured through `:on-failure` is
   called
 - `:suspend`: suspend execution; useful for debugging; resume
   using the `director-resume` command
 
-### Command: `director-resume`
+#### Function: `(director-resume)`
 
 Resume from a `(:suspend)` step.
 
 <!-- elisp-docgen-end -->
-
-## Limitations and further development
-
-The currently entry point, `director-run`, is a low-level building block rather
-than a proper user interface: it requires you to specify everything, every time,
-and doesn't provide higher-level functionality such as interactive debugging,
-parallel runs, and test resporting. The goal is to eventually have that, though
-driven by real use cases rather than upfront design.

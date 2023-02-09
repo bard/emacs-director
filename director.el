@@ -63,7 +63,7 @@ their values:
 - `:on-failure': optional function to run when an `:assert' step
   fails
 - `:on-error': optional function to run when a step triggers an
-  error
+  error; receives the error as argument
 - `:log-target': optional cons cell of the format `(file
   . \"filename\")' specifying a file to save the log to
 - `:typing-style': optional symbol changing the way that `:type'
