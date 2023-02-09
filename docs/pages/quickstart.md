@@ -1,7 +1,10 @@
-;; Run with:
-;;
-;;   emacs -Q -nw -l ../../util/director-bootstrap.el -l demo.el
+# Quickstart
 
+1. Clone this repository.
+
+2. Review [examples/demo/demo.el](https://github.com/bard/emacs-director/tree/master/examples/demo/demo.el):
+
+```lisp
 (director-bootstrap
  :user-dir "/tmp/director-demo"
  :packages '()
@@ -27,3 +30,15 @@
  :after-end (lambda () (kill-emacs 0))
  ;; give useful feedback during development
  :on-error (lambda (err) (message "Error while executing director script: %S" err)))
+```
+
+3. Launch it:
+
+```sh
+$ cd examples/demo
+$ emacs -Q -nw -l ../../util/director-bootstrap.el -l demo.el
+```
+
+4. Emacs starts and plays:
+
+![](/demo.gif)

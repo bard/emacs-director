@@ -1,0 +1,24 @@
+{
+  "index": { "title": "Introduction", "theme": { "breadcrumb": false } },
+  "quickstart": { "title": "Quickstart", "theme": { "breadcrumb": false } },
+  "automating-screencasts": {
+    "title": "Automating screencasts",
+    "theme": { "breadcrumb": false }
+  },
+  "end-to-end-testing": {
+    "title": "End-to-end testing",
+    "theme": { "breadcrumb": false }
+  },
+  "running-in-a-controlled-environment": {
+    "title": "Running in a controlled environment",
+    "theme": { "breadcrumb": false }
+  },
+  "debugging": {
+    "title": "Debugging",
+    "theme": { "breadcrumb": false }
+  },
+  "api-reference": {
+    "title": "API",
+    "theme": { "breadcrumb": false }
+  }
+}

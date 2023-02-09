@@ -1,0 +1,21 @@
+{
+  "name": "docs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "next"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "next": "^13.1.4",
+    "nextra": "^2.2.14",
+    "nextra-theme-docs": "^2.2.10",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "remark-smartypants": "^2.0.0"
+  }
+}
