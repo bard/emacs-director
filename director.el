@@ -1,6 +1,6 @@
 ;;; director.el --- Simulate user sessions -*- lexical-binding: t -*-
 
-;; Copyright (C) 2021 Massimiliano Mirra
+;; Copyright (C) 2021-2023 Massimiliano Mirra
 
 ;; Author: Massimiliano Mirra <hyperstruct@gmail.com>
 ;; URL: https://github.com/bard/emacs-director
