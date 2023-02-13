@@ -3,7 +3,7 @@
 ;; Copyright (C) 2021-2023 Massimiliano Mirra
 
 ;; Author: Massimiliano Mirra <hyperstruct@gmail.com>
-;; URL: https://github.com/bard/emacs-director
+;; URL: https://bard.github.io/emacs-director
 ;; Version: 0.1
 ;; Package-Requires: ((emacs "27.1"))
 ;; Keywords: maint, tools
@@ -25,7 +25,9 @@
 
 ;;; Commentary:
 ;;
-;; Simulate user sessions.
+;; Write scripts using a simple data-as-code DSL to simulate user
+;; sessions. Applications include automating screencasts and
+;; end-to-end testing.
 
 ;;; Code:
 (require 'map)
