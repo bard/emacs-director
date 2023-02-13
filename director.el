@@ -26,7 +26,7 @@
 ;;; Commentary:
 ;;
 ;; Write scripts using a simple data-as-code DSL to simulate user
-;; sessions. Applications include automating screencasts and
+;; sessions.  Applications include automating screencasts and
 ;; end-to-end testing.
 
 ;;; Code:
@@ -223,7 +223,7 @@ If DELAY-OVERRIDE is non-nil, the next step is delayed by that value rather than
 
           (`(:suspend)
            nil)
-          
+
           (`(:assert ,condition)
            (or (eval condition)
                (setq director--failure condition))
