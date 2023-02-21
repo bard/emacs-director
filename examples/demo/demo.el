@@ -3,9 +3,7 @@
 ;;   emacs -Q -nw -l ../../util/director-bootstrap.el -l demo.el
 
 (director-bootstrap
- :user-dir "/tmp/director-demo"
- :packages '()
- :load-path '("../.."))
+ :user-dir "/tmp/director-demo" )
 
 (director-run
  :version 1
@@ -15,6 +13,7 @@
                  (setq python-indent-guess-indent-offset nil)
                  (python-mode))
  :steps '((:call run-python)
+          (:type "\C-xo")
           (:type "def greet():\r")
           (:type "print(\"hello, world!\")")
           (:type "\M-x")
